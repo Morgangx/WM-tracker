@@ -74,3 +74,8 @@ const (
 	IN_ORBITER ActivityType = "in orbiter"
 	IN_RELAY   ActivityType = "in relay"
 )
+
+type RequestData struct {
+	Slug string
+	Rank int8
+}

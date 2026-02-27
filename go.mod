@@ -2,7 +2,10 @@ module WM_tracker
 
 go 1.25.7
 
-require fyne.io/fyne/v2 v2.7.2
+require (
+	fyne.io/fyne/v2 v2.7.2
+	github.com/urfave/cli/v3 v3.6.2
+)
 
 require (
 	fyne.io/systray v1.12.0 // indirect

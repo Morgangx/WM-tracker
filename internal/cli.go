@@ -23,6 +23,9 @@ func PrintMutipleTopOrders(requests *[]RequestInput) {
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintf(w, "----%d---- \t%s\n", i+1, req.Slug)
 		if req.WTS {
+			if len(data.Data.Sell) == 0 {
+				continue
+			}
 			fmt.Fprintln(w, "WTS ORDERS")
 			fmt.Fprintln(w, "i\tSELLER\tSTATUS\tPRICE\tRANK")
 			for j, order := range data.Data.Sell {
@@ -38,6 +41,9 @@ func PrintMutipleTopOrders(requests *[]RequestInput) {
 			}
 		}
 		if req.WTB {
+			if len(data.Data.Buy) == 0 {
+				continue
+			}
 			fmt.Fprintln(w, "WTB ORDERS")
 			fmt.Fprintln(w, "i\tBUYER\tSTATUS\tPRICE\tRANK")
 			for j, order := range data.Data.Buy {

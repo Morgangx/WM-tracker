@@ -11,6 +11,20 @@ import (
 )
 
 func main() {
+	// load any previously-saved items so that separate invocations of the
+	// program can share state. if the file doesn't exist we get an empty
+	// slice and continue.
+	var testData []wmtracker.RequestInput
+	if loaded, err := wmtracker.LoadRequests(); err != nil {
+		log.Fatalf("failed to load saved requests: %v", err)
+	} else if loaded != nil {
+		testData = loaded
+	}
+
+	loop := true
+	loopRunning := false
+	refreshSeconds := 20
+	exit := make(chan bool)
 	cmd := &cli.Command{
 		Name:  "WM_tracker",
 		Usage: "tracks multiple items from warframe.market and prints out specified orders",
@@ -23,6 +37,12 @@ func main() {
 					&cli.StringFlag{
 						Name:    "item",
 						Aliases: []string{"i"},
+						Validator: func(v string) error {
+							if v == "" {
+								return fmt.Errorf("Item flag is required")
+							}
+							return nil
+						},
 					},
 					&cli.Int8Flag{
 						Name:    "rank",
@@ -44,8 +64,13 @@ func main() {
 					},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Println("function call: add")
-					// function here
+					testData = append(testData, wmtracker.RequestInput{
+						Slug: cmd.String("item"),
+						Rank: cmd.Int8("rank"),
+						WTS:  cmd.Bool("WTS"),
+						WTB:  cmd.Bool("WTB"),
+					})
+					wmtracker.PrintMutipleTopOrders(&testData)
 					return nil
 				},
 			},
@@ -54,8 +79,8 @@ func main() {
 				Aliases: []string{"s"},
 				Usage:   "starts a tracking loop",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Println("function call: start")
-					// function here
+					loopRunning = true
+					go wmtracker.MainLoop(&refreshSeconds, &loop)
 					return nil
 				},
 			},
@@ -63,8 +88,8 @@ func main() {
 				Name:  "stop",
 				Usage: "stops main loop",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Println("function call: stop")
-					// function here
+					loop = false
+					exit <- true
 					return nil
 				},
 			},
@@ -74,12 +99,8 @@ func main() {
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
-	var testData []wmtracker.RequestInput
 
-	testData = append(testData, wmtracker.RequestInput{Slug: "vauban_prime_set", WTS: true})
-	testData = append(testData, wmtracker.RequestInput{Slug: "protea_prime_set", WTB: true, WTS: true})
-	testData = append(testData, wmtracker.RequestInput{Slug: "wisp_prime_set", WTB: true})
-	testData = append(testData, wmtracker.RequestInput{Slug: "arcane_hot_shot", Rank: 5, WTB: true, WTS: true})
-	testData = append(testData, wmtracker.RequestInput{Slug: "archon_vitality", Rank: 10, WTS: true})
-	wmtracker.PrintMutipleTopOrders(&testData)
+	if loopRunning {
+		<-exit
+	}
 }

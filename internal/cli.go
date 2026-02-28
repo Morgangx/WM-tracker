@@ -7,6 +7,22 @@ import (
 	"time"
 )
 
+func MainLoop(refresh *int, loop *bool) {
+	for {
+		data, err := LoadRequests()
+		if err != nil {
+			fmt.Println("Error loading requests:", err)
+			return
+		}
+		fmt.Println("Starting main loop iteration")
+		PrintMutipleTopOrders(&data)
+		time.Sleep(time.Duration(*refresh) * time.Second)
+		if !*loop {
+			break
+		}
+	}
+}
+
 func PrintMutipleTopOrders(requests *[]RequestInput) {
 	for i, req := range *requests {
 		if i%3 == 0 { // API has a limit of 3 requests per second
